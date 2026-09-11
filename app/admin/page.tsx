@@ -1,6 +1,6 @@
 'use client'
 
-import { Users, GraduationCap, CalendarDays, BookOpen } from 'lucide-react'
+import { Users, GraduationCap, CalendarDays, BookOpen, Trash2 } from 'lucide-react'
 import { ProtectedRoute } from '@/components/protected-route'
 import { Navigation } from '@/components/navigation'
 import { StatCard } from '@/components/stat-card'
@@ -11,7 +11,7 @@ import { roleLabels } from '@/lib/format'
 
 function AdminDashboard() {
   const { user } = useAuth()
-  const { store } = useData()
+  const { store, deleteUser } = useData()
 
   const teachers = store.users.filter((u) => u.role === 'teacher')
   const students = store.users.filter((u) => u.role === 'student')
@@ -83,6 +83,7 @@ function AdminDashboard() {
                   <th className="px-4 py-3 font-medium">الاسم</th>
                   <th className="px-4 py-3 font-medium">البريد</th>
                   <th className="px-4 py-3 font-medium">الدور</th>
+                  <th className="px-4 py-3 font-medium text-left">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
@@ -96,6 +97,21 @@ function AdminDashboard() {
                       <StatusBadge tone={u.role === 'teacher' ? 'green' : u.role === 'student' ? 'gold' : 'sky'}>
                         {roleLabels[u.role]}
                       </StatusBadge>
+                    </td>
+                    <td className="px-4 py-3 text-left">
+                      {u.role !== 'admin' && (
+                        <button
+                          onClick={() => {
+                            if (confirm(`هل أنت متأكد من رغبتك في إزالة المستخدم "${u.name}" نهائياً؟`)) {
+                              deleteUser(u.id)
+                            }
+                          }}
+                          className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100"
+                        >
+                          <Trash2 className="size-3.5" />
+                          إزالة
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
