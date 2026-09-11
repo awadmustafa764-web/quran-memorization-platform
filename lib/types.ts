@@ -22,7 +22,7 @@ export interface Session {
   date: string // ISO date: YYYY-MM-DD
   time: string // HH:MM
   topic: string // Surah target
-  link: string // Zoom/Meet link (optional online)
+  location: string // مكان اللقاء الوجاهي (مثلاً: مسجد النور - قاعة التحفيظ)
   status: SessionStatus
 }
 
