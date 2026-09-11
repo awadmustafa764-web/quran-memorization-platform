@@ -23,6 +23,7 @@ interface DataContextValue {
   getLatestEvaluation: (studentId: string) => Evaluation | undefined
   // mutations
   addStudent: (input: { name: string; email: string; level: string; teacherId: string }) => void
+  addTeacher: (input: { name: string; email: string; password: string }) => void
   addSession: (s: Omit<Session, 'id'>) => void
   updateSession: (id: string, patch: Partial<Session>) => void
   deleteSession: (id: string) => void
@@ -115,6 +116,24 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     [store, persist],
   )
 
+  const addTeacher = useCallback(
+    (input: { name: string; email: string; password: string }) => {
+      const teacherId = newId('u_t')
+      const teacher: User = {
+        id: teacherId,
+        name: input.name.trim(),
+        role: 'teacher',
+        email: input.email.trim(),
+        password: input.password.trim(),
+      }
+      persist({
+        ...store,
+        users: [...store.users, teacher],
+      })
+    },
+    [store, persist],
+  )
+
   const addSession = useCallback(
     (s: Omit<Session, 'id'>) => persist({ ...store, sessions: [...store.sessions, { ...s, id: newId('sess') }] }),
     [store, persist],
@@ -186,6 +205,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         getAssignmentsForStudent,
         getLatestEvaluation,
         addStudent,
+        addTeacher,
         addSession,
         updateSession,
         deleteSession,
