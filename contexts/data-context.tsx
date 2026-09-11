@@ -24,6 +24,7 @@ interface DataContextValue {
   // mutations
   addStudent: (input: { name: string; email: string; level: string; teacherId: string }) => void
   addTeacher: (input: { name: string; email: string; password: string }) => void
+  updateUser: (userId: string, patch: Partial<User>) => void
   addSession: (s: Omit<Session, 'id'>) => void
   updateSession: (id: string, patch: Partial<Session>) => void
   deleteSession: (id: string) => void
@@ -134,6 +135,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     [store, persist],
   )
 
+  const updateUser = useCallback(
+    (userId: string, patch: Partial<User>) => {
+      const updatedUsers = store.users.map((u) => (u.id === userId ? { ...u, ...patch } : u))
+      persist({
+        ...store,
+        users: updatedUsers,
+      })
+    },
+    [store, persist],
+  )
+
   const addSession = useCallback(
     (s: Omit<Session, 'id'>) => persist({ ...store, sessions: [...store.sessions, { ...s, id: newId('sess') }] }),
     [store, persist],
@@ -206,6 +218,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         getLatestEvaluation,
         addStudent,
         addTeacher,
+        updateUser,
         addSession,
         updateSession,
         deleteSession,
