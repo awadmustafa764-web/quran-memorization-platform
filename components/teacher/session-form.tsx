@@ -26,13 +26,13 @@ export function SessionForm({
   const [topic, setTopic] = useState(initial?.topic ?? '')
   const [date, setDate] = useState(initial?.date ?? todayISO())
   const [time, setTime] = useState(initial?.time ?? '16:00')
-  const [link, setLink] = useState(initial?.link ?? '')
+  const [location, setLocation] = useState(initial?.location ?? '')
   const [status, setStatus] = useState<SessionStatus>(initial?.status ?? 'scheduled')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!topic.trim()) return
-    onSubmit({ topic: topic.trim(), date, time, link: link.trim(), status })
+    onSubmit({ topic: topic.trim(), date, time, location: location.trim(), status })
   }
 
   return (
@@ -82,16 +82,16 @@ export function SessionForm({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="link" className={labelClass}>
-            رابط الجلسة (Zoom / Meet) — اختياري
+          <label htmlFor="location" className={labelClass}>
+            مكان اللقاء الوجاهي (المسجد / القاعة)
           </label>
           <input
-            id="link"
-            value={link}
-            onChange={(e) => setLink(e.target.value)}
-            placeholder="https://meet.google.com/..."
-            dir="ltr"
-            className={`${fieldClass} text-left`}
+            id="location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="مثال: مسجد النور - قاعة التحفيظ الرئيسية"
+            className={fieldClass}
+            required
           />
         </div>
 
