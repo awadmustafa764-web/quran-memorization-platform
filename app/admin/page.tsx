@@ -1,6 +1,7 @@
 'use client'
 
-import { Users, GraduationCap, CalendarDays, BookOpen, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Users, GraduationCap, CalendarDays, BookOpen, Trash2, UserPlus } from 'lucide-react'
 import { ProtectedRoute } from '@/components/protected-route'
 import { Navigation } from '@/components/navigation'
 import { StatCard } from '@/components/stat-card'
@@ -11,10 +12,29 @@ import { roleLabels } from '@/lib/format'
 
 function AdminDashboard() {
   const { user } = useAuth()
-  const { store, deleteUser } = useData()
+  const { store, deleteUser, addTeacher } = useData()
+
+  const [teacherFormOpen, setTeacherFormOpen] = useState(false)
+  const [teacherName, setTeacherName] = useState('')
+  const [teacherEmail, setTeacherEmail] = useState('')
+  const [teacherPassword, setTeacherPassword] = useState('')
 
   const teachers = store.users.filter((u) => u.role === 'teacher')
   const students = store.users.filter((u) => u.role === 'student')
+
+  const handleAddTeacher = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!teacherName.trim() || !teacherEmail.trim() || !teacherPassword.trim()) return
+    addTeacher({
+      name: teacherName.trim(),
+      email: teacherEmail.trim(),
+      password: teacherPassword.trim(),
+    })
+    setTeacherName('')
+    setTeacherEmail('')
+    setTeacherPassword('')
+    setTeacherFormOpen(false)
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -34,7 +54,18 @@ function AdminDashboard() {
         </div>
 
         <section className="mt-10">
-          <h2 className="mb-3 font-display text-lg font-bold text-foreground">المحفّظون وطلابهم</h2>
+          <div className="mb-3 flex items-center justify-between gap-4">
+            <h2 className="font-display text-lg font-bold text-foreground">المحفّظون وطلابهم</h2>
+            <button
+              type="button"
+              onClick={() => setTeacherFormOpen(true)}
+              className="flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <UserPlus className="size-4" />
+              محفّظ جديد
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {teachers.map((t) => {
               const enrolled = store.enrollments
@@ -120,6 +151,67 @@ function AdminDashboard() {
           </div>
         </section>
       </main>
+
+      {/* نافذة إضافة محفّظ جديد */}
+      {teacherFormOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-lg border border-border">
+            <h3 className="font-display text-lg font-bold text-foreground mb-4">إضافة محفّظ جديد</h3>
+            <form onSubmit={handleAddTeacher} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-foreground">اسم المحفّظ</label>
+                <input
+                  type="text"
+                  value={teacherName}
+                  onChange={(e) => setTeacherName(e.target.value)}
+                  placeholder="مثال: الشيخ محمود"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-foreground">البريد الإلكتروني</label>
+                <input
+                  type="email"
+                  value={teacherEmail}
+                  onChange={(e) => setTeacherEmail(e.target.value)}
+                  placeholder="mahmoud@tibyan.sa"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                  dir="ltr"
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-foreground">كلمة المرور</label>
+                <input
+                  type="password"
+                  value={teacherPassword}
+                  onChange={(e) => setTeacherPassword(e.target.value)}
+                  placeholder="••••••"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                  dir="ltr"
+                  required
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTeacherFormOpen(false)}
+                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+                >
+                  إضافة المحفّظ
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
