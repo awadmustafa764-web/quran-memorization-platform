@@ -26,6 +26,7 @@ interface DataContextValue {
   addSession: (s: Omit<Session, 'id'>) => void
   updateSession: (id: string, patch: Partial<Session>) => void
   deleteSession: (id: string) => void
+  deleteUser: (userId: string) => void
   upsertEvaluation: (e: Omit<Evaluation, 'id'> & { id?: string }) => void
   setAssignmentStatus: (id: string, status: AssignmentStatus) => void
   resetData: () => void
@@ -130,6 +131,24 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     [store, persist],
   )
 
+  const deleteUser = useCallback(
+    (userId: string) => {
+      const updatedUsers = store.users.filter((u) => u.id !== userId)
+      const updatedEnrollments = store.enrollments.filter((e) => e.student_id !== userId && e.teacher_id !== userId)
+      const updatedAssignments = store.assignments.filter((a) => a.student_id !== userId && a.teacher_id !== userId)
+      const updatedEvaluations = store.evaluations.filter((ev) => ev.student_id !== userId)
+      
+      persist({
+        ...store,
+        users: updatedUsers,
+        enrollments: updatedEnrollments,
+        assignments: updatedAssignments,
+        evaluations: updatedEvaluations,
+      })
+    },
+    [store, persist],
+  )
+
   const upsertEvaluation = useCallback(
     (e: Omit<Evaluation, 'id'> & { id?: string }) => {
       const existing = store.evaluations.find(
@@ -170,6 +189,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         addSession,
         updateSession,
         deleteSession,
+        deleteUser,
         upsertEvaluation,
         setAssignmentStatus,
         resetData,
