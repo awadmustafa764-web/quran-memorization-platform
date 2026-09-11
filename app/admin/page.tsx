@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, GraduationCap, CalendarDays, BookOpen, Trash2, UserPlus } from 'lucide-react'
+import { Users, GraduationCap, CalendarDays, BookOpen, Trash2, UserPlus, Pencil } from 'lucide-react'
 import { ProtectedRoute } from '@/components/protected-route'
 import { Navigation } from '@/components/navigation'
 import { StatCard } from '@/components/stat-card'
@@ -9,15 +9,22 @@ import { StatusBadge } from '@/components/status-badge'
 import { useAuth } from '@/contexts/auth-context'
 import { useData } from '@/contexts/data-context'
 import { roleLabels } from '@/lib/format'
+import type { User } from '@/lib/types'
 
 function AdminDashboard() {
   const { user } = useAuth()
-  const { store, deleteUser, addTeacher } = useData()
+  const { store, deleteUser, addTeacher, updateUser } = useData()
 
   const [teacherFormOpen, setTeacherFormOpen] = useState(false)
   const [teacherName, setTeacherName] = useState('')
   const [teacherEmail, setTeacherEmail] = useState('')
   const [teacherPassword, setTeacherPassword] = useState('')
+
+  // حالة نموذج تعديل المستخدم
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [editPassword, setEditPassword] = useState('')
 
   const teachers = store.users.filter((u) => u.role === 'teacher')
   const students = store.users.filter((u) => u.role === 'student')
@@ -34,6 +41,24 @@ function AdminDashboard() {
     setTeacherEmail('')
     setTeacherPassword('')
     setTeacherFormOpen(false)
+  }
+
+  const openEditModal = (u: User) => {
+    setEditingUser(u)
+    setEditName(u.name)
+    setEditEmail(u.email)
+    setEditPassword(u.password || '')
+  }
+
+  const handleUpdateUser = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingUser) return
+    updateUser(editingUser.id, {
+      name: editName.trim(),
+      email: editEmail.trim(),
+      password: editPassword.trim(),
+    })
+    setEditingUser(null)
   }
 
   return (
@@ -106,13 +131,14 @@ function AdminDashboard() {
         </section>
 
         <section className="mt-10">
-          <h2 className="mb-3 font-display text-lg font-bold text-foreground">جميع المستخدمين</h2>
+          <h2 className="mb-3 font-display text-lg font-bold text-foreground">جميع المستخدمين وكلمات المرور</h2>
           <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
             <table className="w-full text-right text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50 text-xs text-muted-foreground">
                   <th className="px-4 py-3 font-medium">الاسم</th>
-                  <th className="px-4 py-3 font-medium">البريد</th>
+                  <th className="px-4 py-3 font-medium">البريد الإلكتروني</th>
+                  <th className="px-4 py-3 font-medium">كلمة المرور</th>
                   <th className="px-4 py-3 font-medium">الدور</th>
                   <th className="px-4 py-3 font-medium text-left">الإجراءات</th>
                 </tr>
@@ -124,25 +150,37 @@ function AdminDashboard() {
                     <td className="px-4 py-3 text-muted-foreground" dir="ltr">
                       {u.email}
                     </td>
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground" dir="ltr">
+                      {u.password || 'غير محددة'}
+                    </td>
                     <td className="px-4 py-3">
                       <StatusBadge tone={u.role === 'teacher' ? 'green' : u.role === 'student' ? 'gold' : 'sky'}>
                         {roleLabels[u.role]}
                       </StatusBadge>
                     </td>
                     <td className="px-4 py-3 text-left">
-                      {u.role !== 'admin' && (
+                      <div className="inline-flex items-center gap-2">
                         <button
-                          onClick={() => {
-                            if (confirm(`هل أنت متأكد من رغبتك في إزالة المستخدم "${u.name}" نهائياً؟`)) {
-                              deleteUser(u.id)
-                            }
-                          }}
-                          className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100"
+                          onClick={() => openEditModal(u)}
+                          className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
                         >
-                          <Trash2 className="size-3.5" />
-                          إزالة
+                          <Pencil className="size-3.5" />
+                          تعديل
                         </button>
-                      )}
+                        {u.role !== 'admin' && (
+                          <button
+                            onClick={() => {
+                              if (confirm(`هل أنت متأكد من رغبتك في إزالة المستخدم "${u.name}" نهائياً؟`)) {
+                                deleteUser(u.id)
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100"
+                          >
+                            <Trash2 className="size-3.5" />
+                            إزالة
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -184,11 +222,11 @@ function AdminDashboard() {
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-foreground">كلمة المرور</label>
                 <input
-                  type="password"
+                  type="text"
                   value={teacherPassword}
                   onChange={(e) => setTeacherPassword(e.target.value)}
                   placeholder="••••••"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary font-mono"
                   dir="ltr"
                   required
                 />
@@ -206,6 +244,64 @@ function AdminDashboard() {
                   className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
                 >
                   إضافة المحفّظ
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* نافذة تعديل بيانات ومستخدم */}
+      {editingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-lg border border-border">
+            <h3 className="font-display text-lg font-bold text-foreground mb-4">تعديل بيانات المستخدم: {editingUser.name}</h3>
+            <form onSubmit={handleUpdateUser} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-foreground">الاسم</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-foreground">البريد الإلكتروني</label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                  dir="ltr"
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-foreground">كلمة المرور</label>
+                <input
+                  type="text"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary font-mono"
+                  dir="ltr"
+                  required
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+                >
+                  حفظ التعديلات
                 </button>
               </div>
             </form>
