@@ -1,73 +1,70 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import type { Role, User } from '@/lib/types'
-import { AUTH_KEY } from '@/lib/store'
-import { useData } from './data-context'
+import { useRouter } from 'next/navigation'
+import type { User } from '@/lib/types'
+import { useData } from '@/contexts/data-context'
+
+const AUTH_KEY = 'tibyan_auth_user_v1'
 
 interface AuthContextValue {
   user: User | null
-  ready: boolean
-  login: (email: string, password: string, role: Role) => { ok: boolean; error?: string }
+  login: (email: string, pass: string) => boolean
   logout: () => void
+  ready: boolean
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { store, ready: dataReady } = useData()
   const [user, setUser] = useState<User | null>(null)
   const [ready, setReady] = useState(false)
+  const { store } = useData()
+  const router = useRouter()
 
   useEffect(() => {
-    if (!dataReady) return
     try {
       const raw = window.localStorage.getItem(AUTH_KEY)
       if (raw) {
-        const stored = JSON.parse(raw) as { id: string }
-        const found = store.users.find((u) => u.id === stored.id)
-        if (found) setUser(found)
+        setUser(JSON.parse(raw))
       }
     } catch {
       // ignore
     }
     setReady(true)
-  }, [dataReady, store.users])
+  }, [])
 
-  const login = useCallback(
-    (email: string, password: string, role: Role) => {
-      // Mock auth: match by role first (dropdown bypass), then validate credentials if provided.
-      const byRole = store.users.filter((u) => u.role === role)
-      if (byRole.length === 0) return { ok: false, error: 'لا يوجد مستخدم بهذا الدور' }
-
-      const trimmedEmail = email.trim()
-      let target: User | undefined
-
-      if (trimmedEmail) {
-        target = byRole.find((u) => u.email === trimmedEmail)
-        if (!target) return { ok: false, error: 'البريد الإلكتروني غير مسجل لهذا الدور' }
-        if (password && target.password !== password) {
-          return { ok: false, error: 'كلمة المرور غير صحيحة' }
-        }
-      } else {
-        // Quick bypass for testing: pick the first user of the selected role.
-        target = byRole[0]
+  // دالة تسجيل الدخول الحقيقية بالبريد وكلمة المرور
+  const login = useCallback((email: string, pass: string): boolean => {
+    const found = store.users.find(
+      (u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === pass
+    )
+    if (found) {
+      setUser(found)
+      try {
+        window.localStorage.setItem(AUTH_KEY, JSON.stringify(found))
+      } catch {
+        // ignore
       }
-
-      setUser(target)
-      window.localStorage.setItem(AUTH_KEY, JSON.stringify({ id: target.id }))
-      return { ok: true }
-    },
-    [store.users],
-  )
+      return true
+    }
+    return false
+  }, [store.users])
 
   const logout = useCallback(() => {
     setUser(null)
-    window.localStorage.removeItem(AUTH_KEY)
-  }, [])
+    try {
+      window.localStorage.removeItem(AUTH_KEY)
+    } catch {
+      // ignore
+    }
+    router.push('/login')
+  }, [router])
 
   return (
-    <AuthContext.Provider value={{ user, ready, login, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, login, logout, ready }}>
+      {children}
+    </AuthContext.Provider>
   )
 }
 
