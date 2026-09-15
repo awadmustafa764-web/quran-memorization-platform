@@ -109,7 +109,7 @@ function StudentDashboard() {
                     دخول الجلسة
                   </a>
                 ) : (
-                  <StatusBadge tone="neutral">حضوري في الدار</StatusBadge>
+                  <StatusBadge tone="neutral">.</StatusBadge>
                 )}
               </div>
             ))}
