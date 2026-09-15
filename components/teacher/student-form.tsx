@@ -75,7 +75,7 @@ export function StudentForm({
             dir="ltr"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="student@tibyan.sa"
+            placeholder="student@qudamah.sa"
             className={`${fieldClass} text-left`}
           />
         </div>
