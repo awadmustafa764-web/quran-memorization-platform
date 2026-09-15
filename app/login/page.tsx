@@ -53,7 +53,7 @@ export default function LoginPage() {
             <BookOpen className="size-6" />
           </span>
           <div>
-            <p className="font-display text-lg font-bold">دار التبيان</p>
+            <p className="font-display text-lg font-bold">مدرسة بني قدامة لتحفيظ القران</p>
             <p className="text-sm text-primary-foreground/70">لتحفيظ القرآن الكريم</p>
           </div>
         </div>
@@ -68,7 +68,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <p className="text-sm text-primary-foreground/60">© {new Date().getFullYear()} دار التبيان</p>
+        <p className="text-sm text-primary-foreground/60">© {new Date().getFullYear()} مدرسة بني قدامة لتحفيظ القران</p>
       </section>
 
       {/* Form panel */}
@@ -79,7 +79,7 @@ export default function LoginPage() {
               <BookOpen className="size-6" />
             </span>
             <div>
-              <p className="font-display text-lg font-bold text-foreground">دار التبيان</p>
+              <p className="font-display text-lg font-bold text-foreground">مدرسة بني قدامة لتحفيظ القران</p>
               <p className="text-sm text-muted-foreground">لتحفيظ القرآن الكريم</p>
             </div>
           </div>

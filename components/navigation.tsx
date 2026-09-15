@@ -24,7 +24,7 @@ export function Navigation({ subtitle }: { subtitle?: string }) {
             <BookOpen className="size-5" />
           </span>
           <div>
-            <p className="font-display text-base font-bold leading-tight text-foreground">دار التبيان</p>
+            <p className="font-display text-base font-bold leading-tight text-foreground">مدرسة بني قدامة لتحفيظ القران</p>
             <p className="text-xs text-muted-foreground">{subtitle ?? 'لتحفيظ القرآن الكريم'}</p>
           </div>
         </div>

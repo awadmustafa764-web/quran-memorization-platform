@@ -18,7 +18,7 @@ const cairo = Cairo({
 })
 
 export const metadata: Metadata = {
-  title: 'دار التبيان لتحفيظ القرآن الكريم',
+  title: 'مدرسة بني قدامة لتحفيظ القران لتحفيظ القرآن الكريم',
   description: 'منصة متكاملة لإدارة حلقات تحفيظ القرآن الكريم للمحفظين والطلاب',
   generator: 'v0.app',
 }
