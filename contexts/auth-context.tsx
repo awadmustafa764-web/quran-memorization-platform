@@ -28,13 +28,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, pass: string) => {
     try {
+      // مسح أي مسافات مخفية ممكن تنكتب بالغلط
+      const cleanEmail = email.trim()
+      const cleanPass = pass.trim()
+
       // البحث عن المستخدم مباشرة من قاعدة بيانات Supabase
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('email', email)
-        .eq('password', pass)
-        .single()
+        .eq('email', cleanEmail)
+        .eq('password', cleanPass)
+        .maybeSingle() // غيرناها عشان ما تضرب خطأ 406 إذا ما لقت الحساب
 
       if (data) {
         const loggedInUser: User = {
