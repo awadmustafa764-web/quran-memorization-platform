@@ -75,7 +75,8 @@ function AdminDashboard() {
           <StatCard label="المحفّظون" value={teachers.length} icon={GraduationCap} />
           <StatCard label="الطلاب" value={students.length} icon={Users} />
           <StatCard label="إجمالي الجلسات" value={store.sessions.length} icon={CalendarDays} />
-          <StatCard label="الحلقات" value={store.enrollments.length} hint="ارتباط طالب بمحفّظ" icon={BookOpen} />
+          {/* عدّلنا هاي عشان تقرأ من الطلاب مباشرة بدل الـ enrollments المحذوفة */}
+          <StatCard label="الحلقات" value={store.students.length} hint="ارتباط طالب بمحفّظ" icon={BookOpen} />
         </div>
 
         <section className="mt-10">
@@ -93,10 +94,8 @@ function AdminDashboard() {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {teachers.map((t) => {
-              const enrolled = store.enrollments
-                .filter((e) => e.teacher_id === t.id)
-                .map((e) => store.users.find((u) => u.id === e.student_id))
-                .filter(Boolean)
+              // هان استبدلنا الكود المعقد اللي كان بيضرب، بكود بسيط بيجيب طلاب المحفظ مباشرة
+              const enrolled = store.students.filter((s) => s.teacherId === t.id)
               return (
                 <div key={t.id} className="rounded-lg border border-border bg-card p-5 shadow-sm">
                   <div className="flex items-center justify-between">
@@ -115,9 +114,9 @@ function AdminDashboard() {
                   </div>
                   <ul className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
                     {enrolled.map((s) => (
-                      <li key={s!.id} className="flex items-center justify-between text-sm">
-                        <span className="text-foreground">{s!.name}</span>
-                        <span className="text-xs text-muted-foreground">{s!.level}</span>
+                      <li key={s.id} className="flex items-center justify-between text-sm">
+                        <span className="text-foreground">{s.name}</span>
+                        <span className="text-xs text-muted-foreground">{s.level}</span>
                       </li>
                     ))}
                     {enrolled.length === 0 ? (
@@ -213,7 +212,7 @@ function AdminDashboard() {
                   type="email"
                   value={teacherEmail}
                   onChange={(e) => setTeacherEmail(e.target.value)}
-                  placeholder="mahmoud@tibyan.sa"
+                  placeholder="mahmoud@qudamah.sa"
                   className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
                   dir="ltr"
                   required
@@ -251,7 +250,7 @@ function AdminDashboard() {
         </div>
       )}
 
-      {/* نافذة تعديل بيانات ومستخدم */}
+      {/* نافذة تعديل بيانات المستخدم */}
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-lg border border-border">
