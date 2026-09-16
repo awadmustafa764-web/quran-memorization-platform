@@ -17,28 +17,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // عشان يضل مسجل دخول إذا عملت تحديث للصفحة
+  // التعديل السحري هون: حطينا try/catch عشان لو الذاكرة مضروبة ما يعلق عجل التحميل للأبد
   useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser')
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
+    try {
+      const storedUser = localStorage.getItem('currentUser')
+      if (storedUser) {
+        setUser(JSON.parse(storedUser))
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error)
+      localStorage.removeItem('currentUser') // إذا الذاكرة مضروبة بيمسحها
+    } finally {
+      setLoading(false) // بكل الأحوال بيطفي عجل التحميل
     }
-    setLoading(false)
   }, [])
 
   const login = async (email: string, pass: string) => {
     try {
-      // مسح أي مسافات مخفية ممكن تنكتب بالغلط
       const cleanEmail = email.trim()
       const cleanPass = pass.trim()
 
-      // البحث عن المستخدم مباشرة من قاعدة بيانات Supabase
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('email', cleanEmail)
         .eq('password', cleanPass)
-        .maybeSingle() // غيرناها عشان ما تضرب خطأ 406 إذا ما لقت الحساب
+        .maybeSingle()
 
       if (data) {
         const loggedInUser: User = {
