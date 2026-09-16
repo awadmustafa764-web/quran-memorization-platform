@@ -149,7 +149,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       role: 'teacher'
     }
 
-    const { data, error } = await supabase.from('users').insert([newTeacherObj]).select()
+    // شلنا المتغير data اللي كان عامل تعليقة صامتة لأنو مش مستخدم
+    const { error } = await supabase.from('users').insert([newTeacherObj])
     if (!error) {
       await fetchData()
     } else {
