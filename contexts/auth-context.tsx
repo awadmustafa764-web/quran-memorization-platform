@@ -1,75 +1,78 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import type { User } from '@/lib/types'
-import { useData } from '@/contexts/data-context'
+import React, { createContext, useContext, useState, useEffect } from 'react'
+import { User } from '@/lib/types'
+import { supabase } from '@/lib/supabase'
 
-const AUTH_KEY = 'tibyan_auth_user_v1'
-
-interface AuthContextValue {
+interface AuthContextType {
   user: User | null
-  login: (email: string, pass: string) => boolean
+  login: (email: string, pass: string) => Promise<boolean>
   logout: () => void
-  ready: boolean
+  loading: boolean
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null)
+const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [ready, setReady] = useState(false)
-  const { store } = useData()
-  const router = useRouter()
+  const [loading, setLoading] = useState(true)
 
+  // عشان يضل مسجل دخول إذا عملت تحديث للصفحة
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(AUTH_KEY)
-      if (raw) {
-        setUser(JSON.parse(raw))
-      }
-    } catch {
-      // ignore
+    const storedUser = localStorage.getItem('currentUser')
+    if (storedUser) {
+      setUser(JSON.parse(storedUser))
     }
-    setReady(true)
+    setLoading(false)
   }, [])
 
-  // دالة تسجيل الدخول الحقيقية بالبريد وكلمة المرور
-  const login = useCallback((email: string, pass: string): boolean => {
-    const found = store.users.find(
-      (u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === pass
-    )
-    if (found) {
-      setUser(found)
-      try {
-        window.localStorage.setItem(AUTH_KEY, JSON.stringify(found))
-      } catch {
-        // ignore
-      }
-      return true
-    }
-    return false
-  }, [store.users])
-
-  const logout = useCallback(() => {
-    setUser(null)
+  const login = async (email: string, pass: string) => {
     try {
-      window.localStorage.removeItem(AUTH_KEY)
-    } catch {
-      // ignore
+      // البحث عن المستخدم مباشرة من قاعدة بيانات Supabase
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('password', pass)
+        .single()
+
+      if (data) {
+        const loggedInUser: User = {
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          role: data.role,
+          password: data.password,
+          createdAt: data.created_at
+        }
+        setUser(loggedInUser)
+        localStorage.setItem('currentUser', JSON.stringify(loggedInUser))
+        return true
+      }
+      
+      return false
+    } catch (error) {
+      console.error('Login error:', error)
+      return false
     }
-    router.push('/login')
-  }, [router])
+  }
+
+  const logout = () => {
+    setUser(null)
+    localStorage.removeItem('currentUser')
+  }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, ready }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
 }
