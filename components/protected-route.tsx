@@ -14,20 +14,24 @@ export function ProtectedRoute({
   role: Role
   children: React.ReactNode
 }) {
-  const { user, ready } = useAuth()
+  // غيرناها لـ loading عشان تتطابق مع ملف المصادقة
+  const { user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!ready) return
+    // إذا لسا بيحمل، ما تعمل إشي واستنى
+    if (loading) return
+    
     if (!user) {
       router.replace('/login')
     } else if (user.role !== role) {
-      // Send users to their own dashboard rather than an unauthorized page.
+      // توجيه المستخدمين للوحة الخاصة فيهم إذا حاولوا يدخلوا لوحة بالغلط
       router.replace(dashboardPath(user.role))
     }
-  }, [ready, user, role, router])
+  }, [loading, user, role, router])
 
-  if (!ready || !user || user.role !== role) {
+  // إذا لسا بيحمل، أو ما في مستخدم، أو الدور مش مطابق، ضل طلع التحميل عبل ما يوجهه صح
+  if (loading || !user || user.role !== role) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="size-6 animate-spin text-primary" />
