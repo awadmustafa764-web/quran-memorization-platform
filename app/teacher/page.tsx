@@ -17,12 +17,19 @@ import { formatArabicDate, formatTime, sessionStatusLabels, todayISO } from '@/l
 
 function TeacherDashboard() {
   const { user } = useAuth()
-  const { getStudentsForTeacher, getSessionsForTeacher, addStudent, addSession, updateSession, deleteSession } =
-    useData()
+  // شلنا الدوال اللي بتضرب واعتمدنا على الـ store مباشرة للتحصين
+  const { store, addStudent, addSession, updateSession, deleteSession } = useData()
 
-  const teacherId = user!.id
-  const students = getStudentsForTeacher(teacherId)
-  const sessions = getSessionsForTeacher(teacherId)
+  // حماية إضافية في حال كان اليوزر لسا بحمل
+  const teacherId = user?.id || ''
+  
+  // التحصين السحري زي ما عملنا بلوحة الإدارة بالضبط
+  const safeStudents = store?.students || []
+  const safeSessions = store?.sessions || []
+
+  // فلترة آمنة مستحيل تضرب خطأ
+  const students = safeStudents.filter((s) => s.teacherId === teacherId)
+  const sessions = safeSessions.filter((s) => s.teacherId === teacherId)
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Session | null>(null)
@@ -40,17 +47,16 @@ function TeacherDashboard() {
     setEditing(null)
     setFormOpen(true)
   }
+  
   const openEdit = (s: Session) => {
     setEditing(s)
     setFormOpen(true)
   }
   
-  // التعديل السحري هون: ضفنا async/await وعدلنا teacher_id لـ teacherId
   const handleSubmit = async (draft: SessionDraft) => {
     if (editing) {
       await updateSession(editing.id, draft)
     } else {
-      // شلنا الشحطة عشان تطابق الكود اللي بملف الداتا
       await addSession({ ...draft, teacherId }) 
     }
     setFormOpen(false)
@@ -69,7 +75,7 @@ function TeacherDashboard() {
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <div className="mb-6">
           <h1 className="font-display text-2xl font-bold text-foreground">
-            أهلاً، {user!.name}
+            أهلاً، {user?.name}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             متابعة حلقتك، الطلاب، والجلسات القادمة
