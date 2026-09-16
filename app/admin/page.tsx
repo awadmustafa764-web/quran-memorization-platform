@@ -20,14 +20,18 @@ function AdminDashboard() {
   const [teacherEmail, setTeacherEmail] = useState('')
   const [teacherPassword, setTeacherPassword] = useState('')
 
-  // حالة نموذج تعديل المستخدم
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [editName, setEditName] = useState('')
   const [editEmail, setEditEmail] = useState('')
   const [editPassword, setEditPassword] = useState('')
 
-  const teachers = store.users.filter((u) => u.role === 'teacher')
-  const students = store.users.filter((u) => u.role === 'student')
+  // التحصين السحري: إذا كانت البيانات لسا مش واصلة، بنعطيه مصفوفة فاضية عشان ما يضرب خطأ
+  const safeUsers = store?.users || []
+  const safeSessions = store?.sessions || []
+  const safeStudents = store?.students || []
+
+  const teachers = safeUsers.filter((u) => u.role === 'teacher')
+  const students = safeUsers.filter((u) => u.role === 'student')
 
   const handleAddTeacher = (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,16 +71,15 @@ function AdminDashboard() {
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <div className="mb-6">
-          <h1 className="font-display text-2xl font-bold text-foreground">أهلاً، {user!.name}</h1>
+          <h1 className="font-display text-2xl font-bold text-foreground">أهلاً، {user?.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">نظرة عامة على الدار والمحفّظين والطلاب</p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="المحفّظون" value={teachers.length} icon={GraduationCap} />
           <StatCard label="الطلاب" value={students.length} icon={Users} />
-          <StatCard label="إجمالي الجلسات" value={store.sessions.length} icon={CalendarDays} />
-          {/* عدّلنا هاي عشان تقرأ من الطلاب مباشرة بدل الـ enrollments المحذوفة */}
-          <StatCard label="الحلقات" value={store.students.length} hint="ارتباط طالب بمحفّظ" icon={BookOpen} />
+          <StatCard label="إجمالي الجلسات" value={safeSessions.length} icon={CalendarDays} />
+          <StatCard label="الحلقات" value={safeStudents.length} hint="ارتباط طالب بمحفّظ" icon={BookOpen} />
         </div>
 
         <section className="mt-10">
@@ -94,8 +97,7 @@ function AdminDashboard() {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {teachers.map((t) => {
-              // هان استبدلنا الكود المعقد اللي كان بيضرب، بكود بسيط بيجيب طلاب المحفظ مباشرة
-              const enrolled = store.students.filter((s) => s.teacherId === t.id)
+              const enrolled = safeStudents.filter((s) => s.teacherId === t.id)
               return (
                 <div key={t.id} className="rounded-lg border border-border bg-card p-5 shadow-sm">
                   <div className="flex items-center justify-between">
@@ -143,7 +145,7 @@ function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {store.users.map((u) => (
+                {safeUsers.map((u) => (
                   <tr key={u.id} className="border-b border-border last:border-0">
                     <td className="px-4 py-3 font-medium text-foreground">{u.name}</td>
                     <td className="px-4 py-3 text-muted-foreground" dir="ltr">
@@ -154,7 +156,7 @@ function AdminDashboard() {
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge tone={u.role === 'teacher' ? 'green' : u.role === 'student' ? 'gold' : 'sky'}>
-                        {roleLabels[u.role]}
+                        {roleLabels[u.role] || u.role}
                       </StatusBadge>
                     </td>
                     <td className="px-4 py-3 text-left">
