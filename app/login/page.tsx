@@ -4,44 +4,39 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { BookOpen, Mail, Lock, ChevronLeft, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
-import { useData } from '@/contexts/data-context'
 import { dashboardPath } from '@/lib/format'
 
 export default function LoginPage() {
-  const { user, ready, login } = useAuth()
-  const { store } = useData()
+  // عدّلنا ready لـ loading عشان تطابق اللي كتبناه بملف المصادقة
+  const { user, loading, login } = useAuth()
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false) // عشان نغير شكل الزر وهو بيحمل
 
+  // هاد الكود بيراقب.. أول ما السوبابيس يحكي إنو الحساب صح، بحولك فورا للوحة
   useEffect(() => {
-    if (ready && user) {
+    if (!loading && user) {
       router.replace(dashboardPath(user.role))
     }
-  }, [ready, user, router])
+  }, [loading, user, router])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsSubmitting(true)
 
-    // التحقق من البريد وكلمة المرور عبر سياق المصادقة
-    const success = login(email, password)
+    // حطينا await عشان الموقع "يستنى" رد السوبابيس قبل ما يقرر
+    const success = await login(email, password)
+    
     if (!success) {
       setError('البريد الإلكتروني أو كلمة المرور غير صحيحة!')
+      setIsSubmitting(false)
       return
     }
-
-    // البحث عن المستخدم للتعرف على دوره وتوجيهه تلقائياً للوحة الخاصة به
-    const foundUser = store.users.find(
-      (u) => u.email.toLowerCase() === email.trim().toLowerCase()
-    )
-
-    if (foundUser) {
-      router.replace(dashboardPath(foundUser.role))
-    } else {
-      router.replace('/')
-    }
+    
+    // إذا نجح التسجيل، ما في داعي نكتب كود توجيه هون، لأنو الـ useEffect اللي فوق رح يلقطها ويوجهك لحاله
   }
 
   return (
@@ -102,7 +97,7 @@ export default function LoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@tibyan.sa"
+                    placeholder="admin@qudamah.sa"
                     className="w-full rounded-lg border border-input bg-background py-2.5 pr-10 pl-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
                     dir="ltr"
                     required
@@ -138,15 +133,16 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                disabled={isSubmitting}
+                className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-70"
               >
-                تسجيل الدخول
-                <ChevronLeft className="size-4" />
+                {isSubmitting ? 'جاري التحقق...' : 'تسجيل الدخول'}
+                {!isSubmitting && <ChevronLeft className="size-4" />}
               </button>
             </form>
 
             <div className="mt-6 border-t border-border pt-4 text-center text-xs text-muted-foreground">
-              حساب المدير الافتراضي: <span className="font-mono text-foreground" dir="ltr">admin@tibyan.sa</span> (كلمة السر: <span className="font-mono text-foreground">123456</span>)
+              حساب المدير الافتراضي: <span className="font-mono text-foreground" dir="ltr">admin@qudamah.sa</span> (كلمة السر: <span className="font-mono text-foreground">admin123</span>)
             </div>
           </div>
         </div>
