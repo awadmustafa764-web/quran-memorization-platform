@@ -44,14 +44,21 @@ function TeacherDashboard() {
     setEditing(s)
     setFormOpen(true)
   }
-  const handleSubmit = (draft: SessionDraft) => {
-    if (editing) updateSession(editing.id, draft)
-    else addSession({ ...draft, teacher_id: teacherId })
+  
+  // التعديل السحري هون: ضفنا async/await وعدلنا teacher_id لـ teacherId
+  const handleSubmit = async (draft: SessionDraft) => {
+    if (editing) {
+      await updateSession(editing.id, draft)
+    } else {
+      // شلنا الشحطة عشان تطابق الكود اللي بملف الداتا
+      await addSession({ ...draft, teacherId }) 
+    }
     setFormOpen(false)
     setEditing(null)
   }
-  const handleAddStudent = (draft: StudentDraft) => {
-    addStudent({ ...draft, teacherId })
+
+  const handleAddStudent = async (draft: StudentDraft) => {
+    await addStudent({ ...draft, teacherId })
     setStudentFormOpen(false)
   }
 
